@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext", // 使用 ESM 模块
+    "moduleResolution": "node",
+    "outDir": "./dist", // 输出目录
+    "rootDir": "./src", // 源代码目录
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"]
+}

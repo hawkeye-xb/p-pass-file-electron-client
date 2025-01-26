@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Main Process",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+      },
+      "args": ["./dist/main.js"], // 运行打包后的主进程文件
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"], // 指定输出文件
+      "sourceMaps": true, // 启用 Source Map
+      "preLaunchTask": "npm: build" // 在调试前运行 build 任务
+    }
+  ]
+}

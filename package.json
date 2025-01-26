@@ -1,0 +1,44 @@
+{
+  "name": "my-electron-app",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "compile": "webpack --config webpack.config.js",
+    "start": "npm run compile && electron .",
+    "pack": "npm run compile && electron-builder --dir",
+    "dist": "npm run compile && electron-builder"
+  },
+  "build": {
+    "productName": "MyElectronApp",
+    "appId": "com.example.myelectronapp",
+    "mac": {
+      "target": "dmg"
+    },
+    "files": [
+      "dist/**/*",
+      "!node_modules"
+    ],
+    "directories": {
+      "output": "release"
+    }
+  },
+  "keywords": [],
+  "author": "lizhaowen",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "copy-webpack-plugin": "^12.0.2",
+    "electron": "^34.0.1",
+    "electron-builder": "^25.1.8",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.7.3",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.0"
+  },
+  "dependencies": {
+    "electron-is-dev": "^3.0.1",
+    "electron-log": "^5.2.4",
+    "esm": "^3.2.25"
+  }
+}
