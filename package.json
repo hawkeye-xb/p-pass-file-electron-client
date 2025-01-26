@@ -1,5 +1,5 @@
 {
-  "name": "my-electron-app",
+  "name": "p-pass-file",
   "version": "1.0.0",
   "main": "dist/main.js",
   "scripts": {
@@ -8,22 +8,8 @@
     "pack": "npm run compile && electron-builder --dir",
     "dist": "npm run compile && electron-builder"
   },
-  "build": {
-    "productName": "MyElectronApp",
-    "appId": "com.example.myelectronapp",
-    "mac": {
-      "target": "dmg"
-    },
-    "files": [
-      "dist/**/*",
-      "!node_modules"
-    ],
-    "directories": {
-      "output": "release"
-    }
-  },
   "keywords": [],
-  "author": "lizhaowen",
+  "author": "Hawkeye-XB",
   "license": "ISC",
   "description": "",
   "devDependencies": {

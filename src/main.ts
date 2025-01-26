@@ -55,7 +55,7 @@ function createWindow() {
     mainWindow.loadFile(path.join(resourcesPath, 'ui', 'index.html'));
   }
   // 打开开发者工具（可选）
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', () => {
     mainWindow = null;

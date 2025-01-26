@@ -1,0 +1,23 @@
+{
+  "appId": "com.hawkeye-xb.p-pass-file",
+  "productName": "P-Pass File",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "!node_modules"
+  ],
+  "win": {
+    "target": "nsis",
+    "icon": "./build/icons/icon.ico"
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "./build/icons/icon.icns"
+  },
+  "linux": {
+    "target": "AppImage",
+    "icon": "./build/icons/icon.png"
+  }
+}
