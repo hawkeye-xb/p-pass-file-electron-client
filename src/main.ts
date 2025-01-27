@@ -18,7 +18,12 @@ let mainWindow: BrowserWindow | null = null;
 let serverProcess: ChildProcess; 
 const initServerProcess = () => {
   const serverPath = path.join(resourcesPath, 'server', 'index.js');
-  serverProcess = fork(serverPath);
+  serverProcess = fork(serverPath, {
+    env: {
+      ...process.env,
+      ELECTRON_CACHE_PATH: app.getPath('userData'), // 缓存路径
+    }
+  });
 
   serverProcess.on('message', (message) => {
     console.log('Server message:', message);
@@ -52,7 +57,8 @@ function createWindow() {
   if (!app.isPackaged) {
     mainWindow.loadURL('http://localhost:5173/'); // 替换为你的远端 URL
   } else {
-    mainWindow.loadFile(path.join(resourcesPath, 'ui', 'index.html'));
+    // mainWindow.loadFile(path.join(resourcesPath, 'ui', 'index.html'));
+    mainWindow.loadURL('https://p-pass-file.deno.dev/');
   }
   // 打开开发者工具（可选）
   // mainWindow.webContents.openDevTools();
