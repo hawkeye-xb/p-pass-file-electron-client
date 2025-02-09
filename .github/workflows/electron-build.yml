@@ -79,9 +79,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            release/*.exe
-            release/*.dmg
-            release/*.AppImage
+            release/*-win.exe
+            release/*-mac.dmg
+            release/*-linux.AppImage
           draft: false
           prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
           name: Release ${{ github.ref_name }}
