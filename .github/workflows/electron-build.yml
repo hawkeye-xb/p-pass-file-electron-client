@@ -23,43 +23,81 @@ jobs:
           node-version: '22.11.0'
           npm-version: '10.9.0'
           
-      # 获取服务端依赖（克隆并构建）
+      # 创建独立的工作目录用于服务端构建
+      - name: Create Workspace
+        shell: bash
+        run: |
+          mkdir -p workspace
+          echo "WORKSPACE_DIR=${{ github.workspace }}/workspace" >> $GITHUB_ENV
+          
+      # 构建服务端依赖
       - name: Build Server Dependency
         shell: bash
         run: |
-          git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git temp-server
-          cd temp-server
-          echo "Installing dependencies..."
-          npm install --verbose
+          cd ${{ env.WORKSPACE_DIR }}
+          echo "Cloning server repository..."
+          git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git server
+          cd server
+          
+          echo "Installing server dependencies..."
+          npm install --no-audit --no-fund
+          
           echo "Rebuilding native modules..."
-          npm rebuild --verbose
-          echo "Running build script..."
-          npm run build --verbose
-          mkdir -p "../src/server"
+          npm rebuild
+          
+          echo "Building server..."
+          npm run build
+          
+          echo "Copying build artifacts..."
+          cd ${{ github.workspace }}
+          rm -rf src/server/*
+          mkdir -p src/server
+          
           if [ "$RUNNER_OS" == "Windows" ]; then
-            cp -r dist/* "../src/server/" || xcopy "dist\*" "..\src\server\" /E /I /Y
+            cp -r "${{ env.WORKSPACE_DIR }}/server/dist"/* src/server/ || xcopy "${{ env.WORKSPACE_DIR }}\server\dist\*" "src\server\" /E /I /Y
           else
-            cp -r dist/* "../src/server/"
-          fi
-          cd ..
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            rm -rf temp-server || rd /s /q temp-server
-          else
-            rm -rf temp-server
+            cp -r "${{ env.WORKSPACE_DIR }}/server/dist"/* src/server/
           fi
         env:
           GIT_TERMINAL_PROMPT: 0
           CI: true
           NODE_ENV: production
-      
+          
+      # 清理工作目录
+      - name: Cleanup Workspace
+        if: always()
+        shell: bash
+        run: |
+          rm -rf ${{ env.WORKSPACE_DIR }}
+          
+      # 缓存主项目依赖
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+            
+      # 安装主项目依赖
       - name: Install Dependencies
-        run: npm install
+        run: |
+          echo "Installing project dependencies..."
+          npm install --no-audit --no-fund
         
+      # 构建主项目
       - name: Build Application
-        run: npm run dist
+        run: |
+          echo "Building Electron application..."
+          npm run dist
         env:
           GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
           
+      # 上传构建产物
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -68,5 +106,15 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.AppImage
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.AUTH_TOKEN }}
+
+      # 构建失败时的清理工作
+      - name: Cleanup on failure
+        if: failure()
+        shell: bash
+        run: |
+          rm -rf ${{ env.WORKSPACE_DIR }}
+          rm -rf src/server/*
