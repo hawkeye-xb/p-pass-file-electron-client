@@ -22,7 +22,6 @@ jobs:
         with:
           node-version: '18.19.0'
           npm-version: '10.2.3'
-          npm-version: '10.9.0'
           
       # 创建独立的工作目录用于服务端构建
       - name: Create Workspace
