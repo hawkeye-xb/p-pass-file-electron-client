@@ -47,7 +47,8 @@ jobs:
           npm rebuild
           
           echo "Building server..."
-          npm run build
+          # 使用 npx 调用 cross-env
+          npx cross-env NODE_ENV=production node esbuild.config.js && node copy-node-files.js
           
           echo "Copying build artifacts..."
           cd ${{ github.workspace }}
