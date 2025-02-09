@@ -61,11 +61,11 @@ jobs:
         
       # 同步版本号
       - name: Sync Version
+        shell: bash
         run: |
-          # 获取完整 tag 版本（包含后缀）
-          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')
           echo "Setting version to $VERSION"
-          npm version $VERSION --no-git-tag-version --allow-same-version
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
         
       # 构建主项目
       - name: Build Application
