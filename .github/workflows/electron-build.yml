@@ -29,9 +29,12 @@ jobs:
         run: |
           git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git temp-server
           cd temp-server
-          npm install
-          npm rebuild
-          npm run build
+          echo "Installing dependencies..."
+          npm install --verbose
+          echo "Rebuilding native modules..."
+          npm rebuild --verbose
+          echo "Running build script..."
+          npm run build --verbose
           mkdir -p "../src/server"
           if [ "$RUNNER_OS" == "Windows" ]; then
             cp -r dist/* "../src/server/" || xcopy "dist\*" "..\src\server\" /E /I /Y
@@ -46,6 +49,8 @@ jobs:
           fi
         env:
           GIT_TERMINAL_PROMPT: 0
+          CI: true
+          NODE_ENV: production
       
       - name: Install Dependencies
         run: npm install
