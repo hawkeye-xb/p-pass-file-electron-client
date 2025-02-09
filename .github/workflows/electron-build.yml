@@ -59,6 +59,14 @@ jobs:
       - name: Install Dependencies
         run: npm install --no-audit --no-fund
         
+      # 同步版本号
+      - name: Sync Version
+        run: |
+          # 获取完整 tag 版本（包含后缀）
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Setting version to $VERSION"
+          npm version $VERSION --no-git-tag-version --allow-same-version
+        
       # 构建主项目
       - name: Build Application
         run: npm run dist
@@ -74,6 +82,10 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.AppImage
+          draft: false
+          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.AUTH_TOKEN }}
 
