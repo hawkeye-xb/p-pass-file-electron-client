@@ -1,0 +1,56 @@
+name: Build and Release Electron App
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js and npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'
+          npm-version: '10.9.0'
+          
+      # 获取服务端依赖（克隆并构建）
+      - name: Build Server Dependency
+        run: |
+          git clone https://github.com/hawkeye-xb/p-pass-file-server.git temp-server
+          cd temp-server
+          npm install
+          npm rebuild
+          npm run build
+          mkdir -p ../src/server
+          cp -r dist/* ../src/server/
+          cd ..
+          rm -rf temp-server
+
+      - name: Install Dependencies
+        run: npm install
+        
+      - name: Build Application
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/*.exe
+            release/*.dmg
+            release/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.AUTH_TOKEN }}
