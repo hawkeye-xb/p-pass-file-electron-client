@@ -1,13 +1,16 @@
-import webpack from 'webpack';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import CopyPlugin from 'copy-webpack-plugin';
+// import webpack from 'webpack';
+// import path from 'path';
+// import { fileURLToPath } from 'url';
+// import CopyPlugin from 'copy-webpack-plugin';
 
 // 解决 __dirname 在 ESM 下的问题
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+const webpack = require('webpack');
+const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
 
-export default (env) => {
+module.exports = (env) => {
   const isProduction = env === 'production';
 
   return {
