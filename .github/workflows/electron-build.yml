@@ -34,72 +34,63 @@ jobs:
       - name: Build Server Dependency
         shell: bash
         run: |
-          cd ${{ env.WORKSPACE_DIR }}
-          echo "Cloning server repository..."
-          git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git server
-          cd server
+          # 创建临时构建目录
+          BUILD_DIR="${{ runner.temp }}/server-build"
+          mkdir -p "$BUILD_DIR"
           
-          echo "Installing server dependencies..."
-          # 添加 --include=dev 参数以安装开发依赖
+          echo "Cloning server repository..."
+          git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git "$BUILD_DIR"
+          cd "$BUILD_DIR"
+          
+          echo "Installing all dependencies..."
           npm install --no-audit --no-fund --include=dev
           
           echo "Rebuilding native modules..."
-          npm rebuild
+          npm rebuild --verbose
           
           echo "Building server..."
-          # 使用 npx 调用 cross-env
           npx cross-env NODE_ENV=production node esbuild.config.js && node copy-node-files.js
           
-          echo "Copying build artifacts..."
-          cd ${{ github.workspace }}
-          rm -rf src/server/*
-          mkdir -p src/server
+          echo "Preparing target directory..."
+          TARGET_DIR="${{ github.workspace }}/src/server"
+          rm -rf "$TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
           
+          echo "Copying build artifacts..."
           if [ "$RUNNER_OS" == "Windows" ]; then
-            cp -r "${{ env.WORKSPACE_DIR }}/server/dist"/* src/server/ || xcopy "${{ env.WORKSPACE_DIR }}\server\dist\*" "src\server\" /E /I /Y
+            # Windows 环境使用 PowerShell 处理路径和复制
+            pwsh -Command "Copy-Item -Path '$BUILD_DIR/dist/*' -Destination '$TARGET_DIR' -Recurse -Force"
           else
-            cp -r "${{ env.WORKSPACE_DIR }}/server/dist"/* src/server/
+            # Unix 环境使用 cp 命令
+            cp -R "$BUILD_DIR/dist/"* "$TARGET_DIR/"
+          fi
+          
+          # 验证文件复制
+          if [ ! "$(ls -A "$TARGET_DIR")" ]; then
+            echo "Error: Target directory is empty after copy"
+            exit 1
           fi
         env:
           GIT_TERMINAL_PROMPT: 0
           CI: true
           NODE_ENV: production
-          
-      # 清理工作目录
-      - name: Cleanup Workspace
-        if: always()
-        shell: bash
-        run: |
-          rm -rf ${{ env.WORKSPACE_DIR }}
-          
-      # 缓存主项目依赖
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            node_modules
-            ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-            
-      # 安装主项目依赖
-      - name: Install Dependencies
-        run: |
-          echo "Installing project dependencies..."
-          npm install --no-audit --no-fund
-        
-      # 构建主项目
-      - name: Build Application
-        run: |
-          echo "Building Electron application..."
-          npm run dist
-        env:
-          GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-          ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
-          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
-          
+
       # 上传构建产物
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          # 获取最新tag的信息
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          
+          # 获取tag信息和提交信息
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          
+          # 生成变更日志
+          CHANGELOG=$(git log --pretty=format:"- %s%n  %b" $(git describe --tags --abbrev=0 HEAD^)..HEAD)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -108,8 +99,17 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.AppImage
+          name: Release ${{ steps.release_notes.outputs.tag_name }}
+          body: |
+            ## 更新内容
+            ${{ steps.release_notes.outputs.changelog }}
+            
+            ## 支持平台
+            - Windows x64
+            - macOS Intel/Apple Silicon
           draft: false
           prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.AUTH_TOKEN }}
 
