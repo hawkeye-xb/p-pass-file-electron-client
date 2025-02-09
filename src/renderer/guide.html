@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设备配置引导</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f5f5f5;
+        }
+        .auto {
+            border-left: 4px solid #4CAF50;
+        }
+        .manual {
+            border-left: 4px solid #FF9800;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .status.success {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .status.pending {
+            background-color: #FF9800;
+            color: white;
+        }
+        .steps {
+            margin-left: 20px;
+        }
+        .step {
+            margin: 10px 0;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <h1>设备配置引导</h1>
+    
+    <div class="section auto">
+        <h2>应用自动配置项 <span class="status success">自动完成</span></h2>
+        <div class="steps">
+            <div class="step">✅ 设备信息收集</div>
+            <div class="step">✅ 心跳服务配置</div>
+            <div class="step">✅ 开机自启动设置</div>
+            <div class="step">✅ 网络连接检测</div>
+            <div class="step">✅ 设备唯一标识生成</div>
+        </div>
+    </div>
+
+    <div class="section manual">
+        <h2>需要手动配置项 <span class="status pending">需要操作</span></h2>
+        <div class="steps">
+            <div class="step">
+                <h3>1. BIOS 设置</h3>
+                <p>需要在计算机 BIOS 中启用 Wake-on-LAN 功能：</p>
+                <ul>
+                    <li>重启电脑，在开机时按 Del 或 F2 进入 BIOS</li>
+                    <li>找到 Power Management 或 ACPI 配置</li>
+                    <li>启用 "Wake on LAN" 或 "Remote Wake Up" 选项</li>
+                    <li>保存设置并退出</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h3>2. 网卡设置</h3>
+                <p>Windows 系统设置步骤：</p>
+                <ul>
+                    <li>打开设备管理器</li>
+                    <li>展开"网络适配器"</li>
+                    <li>右键点击网卡 -> 属性</li>
+                    <li>切换到"电源管理"选项卡</li>
+                    <li>勾选"允许此设备唤醒计算机"</li>
+                    <li>勾选"只允许魔术封包唤醒"</li>
+                </ul>
+                <button onclick="checkNetworkSettings()">检查网卡设置</button>
+            </div>
+
+            <div class="step">
+                <h3>3. 防火墙设置</h3>
+                <p>确保以下端口已开放：</p>
+                <ul>
+                    <li>UDP 9 端口（WOL 魔术包）</li>
+                    <li>TCP 7 端口（设备在线检测）</li>
+                </ul>
+                <button onclick="checkFirewallSettings()">检查防火墙设置</button>
+            </div>
+
+            <div class="step">
+                <h3>4. 路由器设置</h3>
+                <p>如果需要跨网段唤醒，需要配置路由器：</p>
+                <ul>
+                    <li>启用 UDP 广播转发</li>
+                    <li>配置端口转发规则</li>
+                    <li>确保路由器支持 WOL 功能</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 预留给 Electron 的通信接口
+        window.electronAPI = window.electronAPI || {};
+        
+        async function checkNetworkSettings() {
+            if (window.electronAPI.checkNetworkSettings) {
+                const result = await window.electronAPI.checkNetworkSettings();
+                alert(result ? '网卡设置正确！' : '网卡设置需要调整，请按照指南进行配置。');
+            }
+        }
+
+        async function checkFirewallSettings() {
+            if (window.electronAPI.checkFirewallSettings) {
+                const result = await window.electronAPI.checkFirewallSettings();
+                alert(result ? '防火墙设置正确！' : '防火墙设置需要调整，请按照指南进行配置。');
+            }
+        }
+    </script>
+</body>
+</html>

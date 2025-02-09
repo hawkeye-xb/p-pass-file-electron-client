@@ -25,6 +25,8 @@
   "dependencies": {
     "electron-is-dev": "^3.0.1",
     "electron-log": "^5.2.4",
-    "esm": "^3.2.25"
+    "esm": "^3.2.25",
+    "node-ping": "^0.1.0",
+    "wake-on-lan": "^0.1.0"
   }
 }
