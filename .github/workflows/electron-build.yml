@@ -25,16 +25,25 @@ jobs:
           
       # 获取服务端依赖（克隆并构建）
       - name: Build Server Dependency
+        shell: bash
         run: |
           git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git temp-server
           cd temp-server
           npm install
           npm rebuild
           npm run build
-          mkdir -p ../src/server
-          cp -r dist/* ../src/server/
+          mkdir -p "../src/server"
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            cp -r dist/* "../src/server/" || xcopy "dist\*" "..\src\server\" /E /I /Y
+          else
+            cp -r dist/* "../src/server/"
+          fi
           cd ..
-          rm -rf temp-server
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            rm -rf temp-server || rd /s /q temp-server
+          else
+            rm -rf temp-server
+          fi
         env:
           GIT_TERMINAL_PROMPT: 0
       
