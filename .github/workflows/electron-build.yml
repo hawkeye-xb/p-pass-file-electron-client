@@ -26,7 +26,7 @@ jobs:
       # 获取服务端依赖（克隆并构建）
       - name: Build Server Dependency
         run: |
-          git clone https://github.com/hawkeye-xb/p-pass-file-server.git temp-server
+          git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git temp-server
           cd temp-server
           npm install
           npm rebuild
@@ -35,7 +35,9 @@ jobs:
           cp -r dist/* ../src/server/
           cd ..
           rm -rf temp-server
-
+        env:
+          GIT_TERMINAL_PROMPT: 0
+      
       - name: Install Dependencies
         run: npm install
         
