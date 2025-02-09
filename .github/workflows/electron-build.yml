@@ -11,7 +11,7 @@ jobs:
     
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, windows-latest]
         
     steps:
       - name: Checkout Code
@@ -40,7 +40,8 @@ jobs:
           cd server
           
           echo "Installing server dependencies..."
-          npm install --no-audit --no-fund
+          # 添加 --include=dev 参数以安装开发依赖
+          npm install --no-audit --no-fund --include=dev
           
           echo "Rebuilding native modules..."
           npm rebuild
