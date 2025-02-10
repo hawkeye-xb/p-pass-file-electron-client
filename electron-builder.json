@@ -10,7 +10,8 @@
   ],
   "win": {
     "target": "nsis",
-    "icon": "./build/icons/icon.ico"
+    "icon": "./build/icons/icon.ico",
+    "artifactName": "${productName}-${version}-win-${arch}.${ext}"
   },
   "mac": {
     "target": [
@@ -20,10 +21,12 @@
       }
     ],
     "icon": "./build/icons/icon.icns",
-    "identity": null
+    "identity": null,
+    "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
   },
   "linux": {
     "target": "AppImage",
-    "icon": "./build/icons/icon.png"
+    "icon": "./build/icons/icon.png",
+    "artifactName": "${productName}-${version}-linux.${ext}"
   }
 }
