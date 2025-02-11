@@ -15,5 +15,18 @@ contextBridge.exposeInMainWorld('electron', {
 		electron: process.versions.electron,
 		node: process.versions.node,
 		appVersion: process.env.APP_VERSION,
+	},
+	// 添加主题相关 API
+	theme: {
+		getCurrentTheme: () => ipcRenderer.invoke('get-theme'),
+		setTheme: (t: 'system' | 'light' | 'dark') => {
+			ipcRenderer.send('set-theme', t);
+		},
+		onThemeChange: (callback: (theme: 'light' | 'dark') => void) => {
+			ipcRenderer.on('theme-changed', (_event, theme) => callback(theme));
+		},
+		removeThemeChangeListener: () => {
+			ipcRenderer.removeAllListeners('theme-changed');
+		}
 	}
 });
