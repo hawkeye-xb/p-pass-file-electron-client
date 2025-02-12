@@ -44,8 +44,8 @@ const initServerProcess = () => {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 800,
     webPreferences: {
       nodeIntegration: false, // 禁用 Node.js 集成
       contextIsolation: true, // 启用上下文隔离

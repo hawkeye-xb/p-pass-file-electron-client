@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('electron', {
 		node: process.versions.node,
 		appVersion: process.env.APP_VERSION,
 	},
+	// 添加重启应用的方法
+	relaunchApp: () => ipcRenderer.send('relaunch-app'),
 	// 添加主题相关 API
 	theme: {
 		getCurrentTheme: () => ipcRenderer.invoke('get-theme'),

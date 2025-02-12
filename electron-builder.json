@@ -21,12 +21,10 @@
       }
     ],
     "icon": "./build/icons/icon.icns",
-    "identity": null,
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.plist",
     "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
-  },
-  "linux": {
-    "target": "AppImage",
-    "icon": "./build/icons/icon.png",
-    "artifactName": "${productName}-${version}-linux.${ext}"
   }
 }

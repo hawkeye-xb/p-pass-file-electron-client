@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, nativeTheme, shell } from "electron";
+import { BrowserWindow, ipcMain, nativeTheme, shell, app } from "electron";
 import Store from 'electron-store';
 
 const schema = {
@@ -45,3 +45,9 @@ ipcMain.handle('open-resource-selector', async (event, options) => {
 ipcMain.on('show-item-in-folder', (_, path: string) => {
 	shell.showItemInFolder(path)
 })
+
+// 添加重启应用的监听器
+ipcMain.on('relaunch-app', () => {
+    app.relaunch();
+    app.exit(0);
+});
