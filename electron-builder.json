@@ -1,5 +1,5 @@
 {
-  "appId": "com.hawkeye-xb.p-pass-file",
+  "appId": "xyz.hawkeye-xb.p-pass-file",
   "productName": "P-Pass File",
   "directories": {
     "output": "release"
@@ -25,6 +25,7 @@
     "gatekeeperAssess": false,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
-    "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
+    "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
+    "notarize": true
   }
 }

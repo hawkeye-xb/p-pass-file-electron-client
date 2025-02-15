@@ -1,4 +1,4 @@
-name: Build and Release Electron App
+name: Build MacOS App
 
 on:
   push:
@@ -6,13 +6,9 @@ on:
       - 'v*'
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  build-macos:
+    runs-on: macos-latest
     
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-        
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -43,22 +39,18 @@ jobs:
           echo "Copying build artifacts..."
           cd ..
           mkdir -p src/server
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            cp -r temp-server/dist/* src/server/ 2>/dev/null || powershell -Command "Copy-Item 'temp-server/dist/*' -Destination 'src/server' -Recurse -Force"
-          else
-            cp -r temp-server/dist/* src/server/
-          fi
+          cp -r temp-server/dist/* src/server/
           
           rm -rf temp-server
         env:
           GIT_TERMINAL_PROMPT: 0
           CI: true
           NODE_ENV: production
-          
+
       # 安装主项目依赖
       - name: Install Dependencies
-        run: npm install --no-audit --no-fund
-        
+        run: npm install --no-audit --no-fund --include=dev
+
       # 同步版本号
       - name: Sync Version
         shell: bash
@@ -66,24 +58,40 @@ jobs:
           VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')
           echo "Setting version to $VERSION"
           npm version "$VERSION" --no-git-tag-version --allow-same-version
-        
-      # 构建主项目
-      - name: Build Application
-        run: npm run dist
+
+      # 导入签名证书
+      - name: Import Apple Developer Certificate
         env:
-          GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-          # 添加以下环境变量支持 Mac 通用二进制构建
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           
+          echo $BUILD_CERTIFICATE_BASE64 | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+      # 构建和签名
+      - name: Build and Sign
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          CSC_LINK: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+        run: npm run dist:mac
+
       # 上传构建产物
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            release/*-win-x64.exe
-            release/*-mac-x64.dmg
-            release/*-mac-arm64.dmg
+            release/*-mac-*.dmg
           draft: false
           prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
           name: Release ${{ github.ref_name }}
