@@ -79,6 +79,7 @@ jobs:
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}  # 添加这一行
           TEAM_ID: ${{ secrets.TEAM_ID }}
           CSC_LINK: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
