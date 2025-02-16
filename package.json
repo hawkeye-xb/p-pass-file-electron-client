@@ -8,13 +8,15 @@
     "pack": "npm run compile && electron-builder --dir",
     "dist": "npm run compile && electron-builder",
     "dist:mac": "npm run compile && electron-builder --mac",
-    "dist:win": "npm run compile && electron-builder --win"
+    "dist:win": "npm run compile && electron-builder --win",
+    "dist:mac:local": "electron-builder --mac --config electron-builder.json"
   },
   "keywords": [],
   "author": "Hawkeye-XB",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@electron/notarize": "^2.5.0",
     "copy-webpack-plugin": "^12.0.2",
     "electron": "^34.0.1",
     "electron-builder": "^25.1.8",

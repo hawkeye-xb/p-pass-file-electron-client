@@ -17,7 +17,7 @@
     "target": [
       {
         "target": "dmg",
-        "arch": ["x64", "arm64"]
+        "arch": [ "arm64"]
       }
     ],
     "icon": "./build/icons/icon.icns",
@@ -26,6 +26,9 @@
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
     "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
-    "notarize": true
+    "notarize": {
+      "teamId": "${env.APPLE_TEAM_ID}"
+    },
+    "identity": null
   }
 }
