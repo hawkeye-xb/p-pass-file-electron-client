@@ -1,4 +1,4 @@
-name: Build MacOS App
+name: Build MacOS App (Intel)
 
 on:
   push:
@@ -6,8 +6,10 @@ on:
       - 'v*'
 
 jobs:
-  build-macos:
+  build-macos-intel:
     runs-on: macos-latest
+    env:
+      MAC_ARCH: x64
     
     steps:
       - name: Checkout Code
@@ -29,29 +31,23 @@ jobs:
           
           echo "Installing dependencies..."
           npm install --no-audit --no-fund --include=dev
-          
-          echo "Rebuilding native modules..."
           npm rebuild
           
           echo "Building server..."
           npx cross-env NODE_ENV=production node esbuild.config.js && node copy-node-files.js
           
-          echo "Copying build artifacts..."
           cd ..
           mkdir -p src/server
           cp -r temp-server/dist/* src/server/
-          
           rm -rf temp-server
         env:
           GIT_TERMINAL_PROMPT: 0
           CI: true
           NODE_ENV: production
 
-      # 安装主项目依赖
       - name: Install Dependencies
         run: npm install --no-audit --no-fund --include=dev
 
-      # 同步版本号
       - name: Sync Version
         shell: bash
         run: |
@@ -59,7 +55,6 @@ jobs:
           echo "Setting version to $VERSION"
           npm version "$VERSION" --no-git-tag-version --allow-same-version
 
-      # 导入签名证书
       - name: Import Apple Developer Certificate
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
@@ -74,37 +69,35 @@ jobs:
           security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
 
-      # 构建和签名
+      - name: Setup Build Environment
+        run: |
+          echo "Setting up x64 build environment..."
+          sudo softwareupdate --install-rosetta --agree-to-license
+          arch -x86_64 /bin/bash -c "echo 'Running in x64 mode'"
+
       - name: Build and Sign
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}  # 添加这一行
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           TEAM_ID: ${{ secrets.TEAM_ID }}
           APPLE_TEAM_ID: ${{ secrets.TEAM_ID }}
           CSC_LINK: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
           GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-        run: npm run dist:mac
+          MAC_ARCH: x64
+        run: |
+          arch -x86_64 npm run dist:mac
 
-      # 上传构建产物
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            release/*-mac-*.dmg
+            release/*-mac-x64.dmg
           draft: false
           prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.AUTH_TOKEN }}
-
-      # 构建失败时的清理工作
-      - name: Cleanup on failure
-        if: failure()
-        shell: bash
-        run: |
-          rm -rf ${{ env.WORKSPACE_DIR }}
-          rm -rf src/server/*

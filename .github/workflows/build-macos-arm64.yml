@@ -1,0 +1,102 @@
+name: Build MacOS App (Apple Silicon)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-macos-arm:
+    runs-on: macos-latest-xlarge
+    env:
+      MAC_ARCH: arm64
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js and npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.19.0'
+          npm-version: '10.2.3'
+          
+      # 构建服务端依赖
+      - name: Build Server Dependency
+        shell: bash
+        run: |
+          echo "Cloning server repository..."
+          git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git temp-server
+          cd temp-server
+          
+          echo "Installing dependencies..."
+          npm install --no-audit --no-fund --include=dev
+          npm rebuild
+          
+          echo "Building server..."
+          npx cross-env NODE_ENV=production node esbuild.config.js && node copy-node-files.js
+          
+          cd ..
+          mkdir -p src/server
+          cp -r temp-server/dist/* src/server/
+          rm -rf temp-server
+        env:
+          GIT_TERMINAL_PROMPT: 0
+          CI: true
+          NODE_ENV: production
+
+      - name: Install Dependencies
+        run: npm install --no-audit --no-fund --include=dev
+
+      - name: Sync Version
+        shell: bash
+        run: |
+          VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')
+          echo "Setting version to $VERSION"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Import Apple Developer Certificate
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          
+          echo $BUILD_CERTIFICATE_BASE64 | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+      - name: Setup Build Environment
+        run: |
+          echo "Setting up arm64 build environment..."
+          arch -arm64 /bin/bash -c "echo 'Running in arm64 mode'"
+
+      - name: Build and Sign
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          APPLE_TEAM_ID: ${{ secrets.TEAM_ID }}
+          CSC_LINK: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          MAC_ARCH: arm64
+        run: |
+          arch -arm64 npm run dist:mac
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/*-mac-arm64.dmg
+          draft: false
+          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.AUTH_TOKEN }}

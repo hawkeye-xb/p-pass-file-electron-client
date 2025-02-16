@@ -17,7 +17,7 @@
     "target": [
       {
         "target": "dmg",
-        "arch": [ "arm64"]
+        "arch": ["${env.MAC_ARCH}"]
       }
     ],
     "icon": "./build/icons/icon.icns",
