@@ -87,7 +87,7 @@ jobs:
           GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
           MAC_ARCH: x64
         run: |
-          arch -x86_64 npm run dist:mac
+          arch -x86_64 npm run dist:mac:intel
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1

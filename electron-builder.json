@@ -16,8 +16,7 @@
   "mac": {
     "target": [
       {
-        "target": "dmg",
-        "arch": ["${env.MAC_ARCH}"]
+        "target": "dmg"
       }
     ],
     "icon": "./build/icons/icon.icns",

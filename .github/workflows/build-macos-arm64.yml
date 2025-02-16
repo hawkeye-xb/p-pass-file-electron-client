@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-macos-arm:
-    runs-on: macos-latest-xlarge
+    runs-on: macos-latest    # 改用标准运行器
     env:
       MAC_ARCH: arm64
     
@@ -86,7 +86,7 @@ jobs:
           GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
           MAC_ARCH: arm64
         run: |
-          arch -arm64 npm run dist:mac
+          arch -arm64 npm run dist:mac:arm
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1

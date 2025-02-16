@@ -7,9 +7,9 @@
     "start": "npm run compile && electron .",
     "pack": "npm run compile && electron-builder --dir",
     "dist": "npm run compile && electron-builder",
-    "dist:mac": "npm run compile && electron-builder --mac",
     "dist:win": "npm run compile && electron-builder --win",
-    "dist:mac:local": "electron-builder --mac --config electron-builder.json"
+    "dist:mac:intel": "npm run compile && electron-builder --mac --x64",
+    "dist:mac:arm": "npm run compile && electron-builder --mac --arm64"
   },
   "keywords": [],
   "author": "Hawkeye-XB",
