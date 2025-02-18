@@ -1,0 +1,88 @@
+name: Build Windows App
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js and npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.19.0'
+          npm-version: '10.2.3'
+          
+      # 构建服务端依赖
+      - name: Build Server Dependency
+        shell: bash
+        run: |
+          echo "Cloning server repository..."
+          git clone https://x-access-token:${{ secrets.AUTH_TOKEN }}@github.com/hawkeye-xb/p-pass-file-server.git temp-server
+          cd temp-server
+          
+          echo "Installing dependencies..."
+          npm install --no-audit --no-fund --include=dev
+          
+          echo "Rebuilding native modules..."
+          npm rebuild
+          
+          echo "Building server..."
+          npx cross-env NODE_ENV=production node esbuild.config.js && node copy-node-files.js
+          
+          echo "Copying build artifacts..."
+          cd ..
+          mkdir -p src/server
+          cp -r temp-server/dist/* src/server/ 2>/dev/null || powershell -Command "Copy-Item 'temp-server/dist/*' -Destination 'src/server' -Recurse -Force"
+          
+          rm -rf temp-server
+        env:
+          GIT_TERMINAL_PROMPT: 0
+          CI: true
+          NODE_ENV: production
+
+      # 安装主项目依赖
+      - name: Install Dependencies
+        run: npm install --no-audit --no-fund --include=dev
+
+      # 同步版本号
+      - name: Sync Version
+        shell: bash
+        run: |
+          VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')
+          echo "Setting version to $VERSION"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      # 构建主项目
+      - name: Build Application
+        env:
+          GH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+        run: npm run dist:win
+
+      # 上传构建产物
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/*-win-x64.exe
+          draft: false
+          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.AUTH_TOKEN }}
+
+      # 构建失败时的清理工作
+      - name: Cleanup on failure
+        if: failure()
+        shell: bash
+        run: |
+          rm -rf ${{ env.WORKSPACE_DIR }}
+          rm -rf src/server/*
