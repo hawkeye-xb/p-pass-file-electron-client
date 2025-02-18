@@ -96,7 +96,7 @@ jobs:
           files: |
             release/*-mac-x64.dmg
           draft: false
-          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+          prerelease: true
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
         env:

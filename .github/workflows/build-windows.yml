@@ -73,7 +73,7 @@ jobs:
           files: |
             release/*-win-x64.exe
           draft: false
-          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+          prerelease: true
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
         env:
