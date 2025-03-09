@@ -39,6 +39,7 @@ jobs:
           cd ..
           mkdir -p src/server
           cp -r temp-server/dist/* src/server/
+          ls -la src/server
           rm -rf temp-server
         env:
           GIT_TERMINAL_PROMPT: 0
