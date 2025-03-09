@@ -28,6 +28,6 @@
     "notarize": {
       "teamId": "${env.APPLE_TEAM_ID}"
     },
-    "identity": null
+    "identity": "Developer ID Application: lizhaowen (${env.APPLE_TEAM_ID})"
   }
 }
