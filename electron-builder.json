@@ -24,9 +24,6 @@
     "gatekeeperAssess": false,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
-    "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
-    "notarize": {
-      "teamId": "${env.APPLE_TEAM_ID}"
-    }
+    "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
   }
 }
