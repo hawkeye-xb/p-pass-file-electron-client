@@ -3,6 +3,8 @@ import path from 'path';
 import { ChildProcess, fork } from 'child_process';
 import './ipcListeners';
 import log from 'electron-log';
+import { autoUpdater } from 'electron-updater';
+import isDev from 'electron-is-dev';
 
 const resourcesPath = app.isPackaged
   ? __dirname // path.join(process.resourcesPath) // .../Contents/Resources
@@ -42,6 +44,59 @@ const initServerProcess = () => {
   });  
 };
 
+// 检查更新功能
+const checkForUpdates = () => {
+  if (isDev) {
+    log.info('Running in development mode, skipping auto-update check');
+    return;
+  }
+
+  log.info('Checking for updates...');
+  
+  autoUpdater.logger = log;
+  autoUpdater.logger.transports.file.level = 'info';
+  
+  // 配置事件监听
+  autoUpdater.on('checking-for-update', () => {
+    log.info('Checking for update...');
+  });
+  
+  autoUpdater.on('update-available', (info) => {
+    log.info('Update available:', info);
+    if (mainWindow) {
+      mainWindow.webContents.send('update-available', info);
+    }
+  });
+  
+  autoUpdater.on('update-not-available', (info) => {
+    log.info('Update not available:', info);
+  });
+  
+  autoUpdater.on('error', (err) => {
+    log.error('Error in auto-updater:', err);
+  });
+  
+  autoUpdater.on('download-progress', (progressObj) => {
+    let logMessage = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}% (${progressObj.transferred}/${progressObj.total})`;
+    log.info(logMessage);
+    if (mainWindow) {
+      mainWindow.webContents.send('download-progress', progressObj);
+    }
+  });
+  
+  autoUpdater.on('update-downloaded', (info) => {
+    log.info('Update downloaded; will install now', info);
+    if (mainWindow) {
+      mainWindow.webContents.send('update-downloaded', info);
+      // 可以选择立即安装或者提醒用户稍后安装
+      // autoUpdater.quitAndInstall();
+    }
+  });
+  
+  // 检查更新
+  autoUpdater.checkForUpdatesAndNotify();
+};
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -71,6 +126,7 @@ function createWindow() {
 app.on('ready', () => {
   createWindow();
   initServerProcess();
+  checkForUpdates();
 });
 
 app.on('window-all-closed', () => {
